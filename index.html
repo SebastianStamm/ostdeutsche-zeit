@@ -43,14 +43,21 @@
 
     let min = now.getMinutes();
     let teiler = gcd(min, 60);
+    let hourOverflow = false;
 
     if (teiler === 1) {
       min += now.getSeconds() > 30 ? 1 : -1;
+
+      if (min === 60) {
+        min = 0;
+        hourOverflow = true;
+      }
+
       teiler = gcd(min, 60);
     }
 
     if (min === 0) {
-      hours.textContent = now.getHours() % 12;
+      hours.textContent = (now.getHours() + hourOverflow) % 12;
       minutes.textContent = "•";
     } else {
       minutes.textContent = `${min / teiler} / ${60 / teiler}`;
