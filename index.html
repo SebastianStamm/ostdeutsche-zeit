@@ -1,0 +1,77 @@
+<head>
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+  />
+  <style>
+    body {
+      background-color: black;
+      text-align: center;
+      font-size: 40vh;
+      color: white;
+      line-height: 90%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      text-shadow: 0 0 0.15em #1da9cc;
+    }
+
+    #seconds {
+      position: absolute;
+      bottom: 10vh;
+      right: 10vh;
+      font-size: 5vh;
+      line-height: 5vh;
+    }
+  </style>
+</head>
+<div id="minutes"></div>
+<div id="hours"></div>
+<div id="seconds"></div>
+
+<script>
+  document.body.addEventListener("click", () => location.reload());
+
+  function update() {
+    const now = new Date();
+
+    hours.textContent = (now.getHours() + 1) % 12;
+    seconds.textContent = now.getSeconds();
+
+    let min = now.getMinutes();
+    let teiler = gcd(min, 60);
+
+    if (teiler === 1) {
+      min += now.getSeconds() > 30 ? 1 : -1;
+      teiler = gcd(min, 60);
+    }
+
+    if (min === 0) {
+      hours.textContent = now.getHours() % 12;
+      minutes.textContent = "•";
+    } else {
+      minutes.textContent = `${min / teiler} / ${60 / teiler}`;
+    }
+
+    if (hours.textContent === "0") {
+      hours.textContent = "12";
+    }
+
+    if (minutes.textContent.startsWith("1 ")) {
+      minutes.textContent = minutes.textContent.substr(2);
+    }
+
+    document.title = minutes.textContent + " " + hours.textContent;
+  }
+
+  update();
+  window.setInterval(update, 1000);
+
+  function gcd(a, b) {
+    if (b === 0) return a;
+    return gcd(b, a % b);
+  }
+</script>
