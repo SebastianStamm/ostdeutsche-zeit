@@ -18,64 +18,85 @@
       overflow: hidden;
       text-shadow: 0 0 0.15em #1da9cc;
     }
-
-    #seconds {
-      position: absolute;
-      bottom: 10vh;
-      right: 10vh;
-      font-size: 5vh;
-      line-height: 5vh;
-    }
   </style>
 </head>
 <div id="minutes"></div>
 <div id="hours"></div>
-<div id="seconds"></div>
 
 <script>
+  const steps = [];
+
+  for (let i = 1; i <= 12; i++) {
+    for (let j = 1; j < i; j++) {
+      if (gcd(j, i) === 1) {
+        steps.push({ value: j / i, top: j, bottom: i });
+      }
+    }
+  }
+
+  steps.unshift({ value: 0, top: 0, bottom: 1 });
+  steps.push({ value: 1, top: 1, bottom: 1 });
+
+  steps.sort((a, b) => a.value - b.value);
+
   document.body.addEventListener("click", () => location.reload());
 
   function update() {
     const now = new Date();
+    const currentValue =
+      (now.getSeconds() * 1000 +
+        now.getMinutes() * 60 * 1000 +
+        now.getMilliseconds()) /
+      (60 * 60 * 1000);
 
-    hours.textContent = (now.getHours() + 1) % 12;
-    seconds.textContent = now.getSeconds();
+    const idx1 = steps.findIndex(({ value }) => value > currentValue);
+    const idx2 = idx1 - 1;
 
-    let min = now.getMinutes();
-    let teiler = gcd(min, 60);
-    let hourOverflow = false;
+    const diff1 = steps[idx1].value - currentValue;
+    const diff2 = currentValue - steps[idx2].value;
 
-    if (teiler === 1) {
-      min += now.getSeconds() > 30 ? 1 : -1;
-
-      if (min === 60) {
-        min = 0;
-        hourOverflow = true;
-      }
-
-      teiler = gcd(min, 60);
+    let idx = idx2;
+    if (diff1 < diff2) {
+      idx = idx1;
     }
 
-    if (min === 0) {
-      hours.textContent = (now.getHours() + hourOverflow) % 12;
-      minutes.textContent = "•";
+    const entry = steps[idx];
+
+    let out = "";
+    if (entry.bottom === 1) {
+      out = "•";
     } else {
-      minutes.textContent = `${min / teiler} / ${60 / teiler}`;
+      if (entry.top !== 1) out += entry.top + " ";
+      out += "/ " + entry.bottom;
+    }
+    minutes.textContent = out;
+
+    if (entry.bottom === 1 && entry.top === 0) {
+      hours.textContent = now.getHours() % 12;
+    } else {
+      hours.textContent = (now.getHours() + 1) % 12;
     }
 
     if (hours.textContent === "0") {
       hours.textContent = "12";
     }
 
-    if (minutes.textContent.startsWith("1 ")) {
-      minutes.textContent = minutes.textContent.substr(2);
-    }
-
     document.title = minutes.textContent + " " + hours.textContent;
+
+    let deltaToNextUpdate;
+    if (idx === steps.length - 1) {
+      deltaToNextUpdate = 1 - currentValue + steps[1].value / 2;
+    } else {
+      const remainingCurrent = steps[idx].value - currentValue;
+      const toNextSwitch = (steps[idx + 1].value - steps[idx].value) / 2;
+      deltaToNextUpdate = remainingCurrent + toNextSwitch;
+    }
+    const inMs = deltaToNextUpdate * (60 * 60 * 1000);
+
+    setTimeout(update, Math.ceil(inMs));
   }
 
   update();
-  window.setInterval(update, 1000);
 
   function gcd(a, b) {
     if (b === 0) return a;
